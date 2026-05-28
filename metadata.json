@@ -1,0 +1,6 @@
+{
+  "name": "ARC TESTNET VALIDATOR",
+  "description": "An interactive utility by Waziri to inspect, parse, and validate EVM project configurations and GitHub repositories against the official Arc Testnet parameters (Chain ID 5042002), featuring automated configuration scanners and live RPC ping diagnostics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
