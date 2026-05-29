@@ -284,7 +284,7 @@ export function parsePastedText(text: string): ParsedConfig {
 }
 
 // Generate human-friendly comparisons of found vs official parameters
-export function validateConfig(parsed: ParsedConfig): ValidationItem[] {
+export function validateConfig(parsed: ParsedConfig, text: string = ''): ValidationItem[] {
   const items: ValidationItem[] = [];
 
   // 1. RPC URL Validation
@@ -415,6 +415,48 @@ export function validateConfig(parsed: ParsedConfig): ValidationItem[] {
       label: 'Block Explorer',
       foundValue: val,
       expectedValue: OFFICIAL_ARC_TESTNET.blockExplorer,
+      status,
+      message,
+      severity,
+    });
+  }
+
+  // 5. Deployment Readiness check
+  {
+    const hasDeploymentKeywords = /deploy|ignition|contracts?|factory|forge|hardhat|ethers|viem|wallet|pk|private_key/i.test(text);
+    const rpcVal = parsed.rpcUrl;
+    const chainVal = parsed.chainId;
+    
+    let status: ValidationItem['status'] = 'missing';
+    let severity: ValidationItem['severity'] = 'neutral';
+    let message = 'No deployment script or contract interaction keywords detected. Paste configuration scripts or deployment files to evaluate readiness.';
+    let foundValue: string | null = null;
+
+    if (hasDeploymentKeywords) {
+      foundValue = 'Deployment Context Found';
+      const isRpcValid = rpcVal && (rpcVal.includes('rpc.testnet.arc.network') || rpcVal.includes('rpc-testnet.arc.network') || rpcVal.includes('testnet.arc.network'));
+      const isChainValid = chainVal === OFFICIAL_ARC_TESTNET.chainId;
+
+      if (isRpcValid && isChainValid) {
+        status = 'valid';
+        severity = 'success';
+        message = 'Deployment setup matches perfectly! Your scripts correctly point to Arc Testnet Chain ID (5042002) and RPC nodes. Ready to deploy successfully!';
+      } else if (isRpcValid) {
+        status = 'warning';
+        severity = 'amber';
+        message = 'RPC details are valid, but Chain ID parameter is either missing or mismatched. Ensure Chain ID 5042002 is active to execute contract deployments.';
+      } else {
+        status = 'invalid';
+        severity = 'red';
+        message = 'Missing network target parameters. To deploy successfully on Arc Testnet, configure your provider with the canonical RPC URL (https://rpc.testnet.arc.network) and Chain ID 5042002.';
+      }
+    }
+
+    items.push({
+      key: 'deployment',
+      label: 'Deploy Readiness / Setup',
+      foundValue,
+      expectedValue: 'Optimal Settings',
       status,
       message,
       severity,

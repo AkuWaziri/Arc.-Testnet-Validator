@@ -12,7 +12,7 @@ export interface NetworkConfig {
 }
 
 export interface ValidationItem {
-  key: 'rpcUrl' | 'chainId' | 'gasToken' | 'blockExplorer';
+  key: 'rpcUrl' | 'chainId' | 'gasToken' | 'blockExplorer' | 'deployment';
   label: string;
   foundValue: string | number | null;
   expectedValue: string | number | null;

@@ -74,6 +74,47 @@ const provider = new ethers.JsonRpcProvider(
     name: "Arc Testnet"
   }
 );`,
+  hardhat_deploy: `// scripts/deploy.js (Hardhat Contract Deployment Task)
+const hre = require("hardhat");
+
+async function main() {
+  console.log("Starting deployment on Arc Testnet...");
+  
+  // Connect to Arc Testnet canonical endpoints
+  const rpcUrl = "https://rpc.testnet.arc.network";
+  const chainId = 5042002;
+  const provider = new hre.ethers.JsonRpcProvider(rpcUrl, chainId);
+
+  const ArcContract = await hre.ethers.getContractFactory("ArcDapp");
+  const contract = await ArcContract.deploy({
+    gasLimit: 8000000 // Ensure valid fee limit for USDC payment
+  });
+
+  await contract.waitForDeployment();
+  console.log("Success! Contract deployed on Arc Testnet:", await contract.getAddress());
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});`,
+  foundry_deploy: `// script/Deploy.s.sol (Foundry Deploy Script)
+pragma solidity ^0.8.20;
+
+import "forge-std/Script.sol";
+
+contract DeployScript is Script {
+    function run() external {
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        
+        // Connect and deploy on Arc Testnet
+        vm.startBroadcast(deployerPrivateKey);
+        
+        // MyContract token = new MyContract();
+        
+        vm.stopBroadcast();
+    }
+}`,
   broken_hardhat: `// Incorrect Hardhat Setup (Common developer mistakes)
 module.exports = {
   networks: {
@@ -104,7 +145,7 @@ export default function PasteScanner({ onParsed }: { onParsed: (parsed: ParsedCo
     setParsed(result);
     onParsed(result);
 
-    const validationList = validateConfig(result);
+    const validationList = validateConfig(result, pasteText);
     setValidations(validationList);
   }, [pasteText, onParsed]);
 
@@ -126,8 +167,9 @@ export default function PasteScanner({ onParsed }: { onParsed: (parsed: ParsedCo
   const rpcValidation = validations.find(v => v.key === 'rpcUrl');
   const hasCorrectRpc = rpcValidation && rpcValidation.status === 'valid';
 
-  // Compute percentage match based on presence of correct RPC Url
-  const alignScore = hasCorrectRpc ? (matchesCount === 4 ? 100 : Math.round((matchesCount / 4) * 100)) : 0;
+  // Compute percentage match based on presence of correct RPC Url from active/scanned parameters
+  const evaluatedCount = validations.filter(v => v.status !== 'missing').length || 1;
+  const alignScore = hasCorrectRpc ? Math.round((matchesCount / evaluatedCount) * 100) : 0;
   const isMismatched = !hasCorrectRpc;
 
   return (
@@ -138,7 +180,7 @@ export default function PasteScanner({ onParsed }: { onParsed: (parsed: ParsedCo
           Project File Config Inspector
         </h2>
         <p className="text-xs text-slate-500 mt-1 font-sans">
-          Paste configuration snippets (e.g. from <code className="bgAAA-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono font-bold">hardhat.config.js</code>, 
+          Paste configuration snippets (e.g. from <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono font-bold">hardhat.config.js</code>, 
           <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono font-bold">foundry.toml</code>, <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono font-bold">.env</code>) to verify parameters dynamically.
         </p>
       </div>
@@ -187,6 +229,20 @@ export default function PasteScanner({ onParsed }: { onParsed: (parsed: ParsedCo
           className="text-[11px] font-mono font-semibold px-2.5 py-1 bg-white hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 text-slate-75 rounded-lg transition-colors border-2 border-slate-200 cursor-pointer"
         >
           ✅ Ethers.js
+        </button>
+        <button
+          id="btn-preset-hardhat-deploy"
+          onClick={() => insertPreset('hardhat_deploy')}
+          className="text-[11px] font-mono font-semibold px-2.5 py-1 bg-white hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 text-slate-75 rounded-lg transition-colors border-2 border-slate-200 cursor-pointer"
+        >
+          🚀 Hardhat Deploy Script
+        </button>
+        <button
+          id="btn-preset-foundry-deploy"
+          onClick={() => insertPreset('foundry_deploy')}
+          className="text-[11px] font-mono font-semibold px-2.5 py-1 bg-white hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 text-slate-75 rounded-lg transition-colors border-2 border-slate-200 cursor-pointer"
+        >
+          🚀 Foundry Deploy Script
         </button>
         <button
           id="btn-preset-broken"
