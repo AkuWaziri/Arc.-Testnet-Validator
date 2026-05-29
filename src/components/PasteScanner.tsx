@@ -123,6 +123,13 @@ export default function PasteScanner({ onParsed }: { onParsed: (parsed: ParsedCo
   const warningsCount = validations.filter(v => v.status === 'warning').length;
   const errorsCount = validations.filter(v => v.status === 'invalid').length;
 
+  const rpcValidation = validations.find(v => v.key === 'rpcUrl');
+  const hasCorrectRpc = rpcValidation && rpcValidation.status === 'valid';
+
+  // Compute percentage match based on presence of correct RPC Url
+  const alignScore = hasCorrectRpc ? (matchesCount === 4 ? 100 : Math.round((matchesCount / 4) * 100)) : 0;
+  const isMismatched = !hasCorrectRpc;
+
   return (
     <div className="space-y-6">
       <div className="border-b border-slate-100 pb-4">
@@ -131,7 +138,7 @@ export default function PasteScanner({ onParsed }: { onParsed: (parsed: ParsedCo
           Project File Config Inspector
         </h2>
         <p className="text-xs text-slate-500 mt-1 font-sans">
-          Paste configuration snippets (e.g. from <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono font-bold">hardhat.config.js</code>, 
+          Paste configuration snippets (e.g. from <code className="bgAAA-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono font-bold">hardhat.config.js</code>, 
           <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono font-bold">foundry.toml</code>, <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono font-bold">.env</code>) to verify parameters dynamically.
         </p>
       </div>
@@ -260,32 +267,61 @@ GAS_TOKEN="USDC"`}
                 className="space-y-4"
               >
                 {/* Score badge / general indicator */}
-                <div className="bg-slate-900 border-2 border-slate-800 text-white rounded-2xl p-4.5 shadow-sm flex items-center justify-between font-mono">
-                  <div>
-                    <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">Target Verification Score</p>
-                    <div className="flex items-baseline gap-1 mt-1">
-                      <span className="text-2xl font-black text-indigo-400 tracking-tight">{matchesCount}</span>
-                      <span className="text-slate-600">/</span>
-                      <span className="text-xs font-bold text-slate-300">4 checks passed</span>
+                <div id="paste-score-panel" className={`border-2 rounded-3xl p-5 shadow-sm flex flex-col gap-3 font-sans overflow-hidden ${
+                  alignScore === 100 
+                    ? 'bg-emerald-50 border-emerald-250 text-emerald-950'
+                    : isMismatched
+                    ? 'bg-rose-50/80 border-rose-200 text-rose-950'
+                    : 'bg-amber-50 border-amber-250 text-amber-950'
+                }`}>
+                  <div className="flex items-center justify-between font-mono">
+                    <div>
+                      <p className={`text-[10px] uppercase font-black tracking-widest ${
+                        alignScore === 100 ? 'text-emerald-700' : isMismatched ? 'text-rose-600' : 'text-amber-800'
+                      }`}>
+                        Target Alignment Matches
+                      </p>
+                      <div className="flex items-baseline gap-1 mt-1 font-sans">
+                        <span className="text-3xl font-black tracking-tight">{alignScore}%</span>
+                        <span className="text-[10px] font-bold font-mono">MATCHED</span>
+                      </div>
+                    </div>
+                    <div>
+                      {alignScore === 100 ? (
+                        <span className="flex items-center gap-1.5 text-xs font-black bg-emerald-150 text-emerald-850 px-3 py-1.5 rounded-xl border border-emerald-350 uppercase tracking-widest">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" /> ALIGNED
+                        </span>
+                      ) : isMismatched ? (
+                        <span className="flex items-center gap-1.5 text-xs font-black bg-rose-100 text-rose-800 px-3 py-1.5 rounded-xl border border-rose-300 uppercase tracking-widest animate-pulse">
+                          <AlertTriangle className="h-4 w-4 text-rose-650" /> MISMATCHED / OFFLINE
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5 text-xs font-black bg-amber-100 text-amber-850 px-3 py-1.5 rounded-xl border border-amber-300 uppercase tracking-widest">
+                          <AlertTriangle className="h-4 w-4 text-amber-650" /> PARTIAL
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    {errorsCount > 0 ? (
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold bg-amber-950 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-800 uppercase tracking-wider">
-                        <X className="h-3 w-3" /> {errorsCount} Error{errorsCount > 1 ? 's' : ''}
-                      </span>
-                    ) : warningsCount > 0 ? (
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold bg-amber-950 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-800 uppercase tracking-wider">
-                        <AlertTriangle className="h-3 w-3" /> {warningsCount} Hint{warningsCount > 1 ? 's' : ''}
-                      </span>
-                    ) : matchesCount === 4 ? (
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold bg-emerald-950 text-emerald-300 px-2.5 py-1 rounded-lg border border-emerald-800 uppercase tracking-wider">
-                        <Check className="h-3 w-3" /> Perfect Set
-                      </span>
+
+                  <div className={`text-[11px] leading-relaxed border p-3 rounded-2xl ${
+                    alignScore === 100 
+                      ? 'border-emerald-200 bg-emerald-100/30' 
+                      : isMismatched 
+                      ? 'border-rose-200 bg-rose-100/30'
+                      : 'border-amber-200 bg-amber-100/30'
+                  }`}>
+                    {alignScore === 100 ? (
+                      <div>
+                        🏆 <b>Perfect Harmony!</b> Your configuration code is fully compliant with the <b>Arc Testnet</b>. The nodes, chain limits, and settlement protocols are perfectly synchronized.
+                      </div>
+                    ) : isMismatched ? (
+                      <div>
+                        ❌ <b>Core Mismatch Detected!</b> None of the searched configuration variables contain the correct Arc Testnet RPC URL (<code className="bg-rose-100 text-rose-900 rounded px-1 font-bold">{OFFICIAL_ARC_TESTNET.rpcUrl}</code>). Score is set to <b>0%</b>. Correct this setting to sync and deploy properly.
+                      </div>
                     ) : (
-                      <span className="text-[10px] text-slate-400 border border-slate-700 px-2.5 py-1 rounded-lg bg-slate-800 font-bold uppercase tracking-wider">
-                        Partial
-                      </span>
+                      <div>
+                        ⚠️ <b>Partial Setup Alert:</b> Your script targets the correct RPC node URL, but minor configuration parameters (such as the block explorer link or the native gas currency ticker) are sub-optimal. Let's fix those below!
+                      </div>
                     )}
                   </div>
                 </div>

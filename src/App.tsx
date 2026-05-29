@@ -7,13 +7,14 @@ import React, { useState, useEffect } from 'react';
 import { NetworkConfig, ParsedConfig } from './types';
 import { OFFICIAL_ARC_TESTNET } from './lib/arcConfig';
 import PasteScanner from './components/PasteScanner';
-import GithubScanner from './components/GithubScanner';
-import { Check, Info, FileCode, Wallet, Terminal, Shield, RefreshCw, Layers, ExternalLink, Globe, Cpu, Github, Coins, Zap, Search, Hash } from 'lucide-react';
+import InteractiveMatcher from './components/InteractiveMatcher';
+import { Check, Info, FileCode, Sliders, Wallet, Terminal, Shield, RefreshCw, Layers, ExternalLink, Globe, Cpu, Coins, Zap, Search, Hash } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'scan' | 'github'>('github');
+  const [activeTab, setActiveTab] = useState<'scan' | 'interactive'>('scan');
   const [pastedRpcUrl, setPastedRpcUrl] = useState<string | null>(null);
+  const [copiedSpec, setCopiedSpec] = useState<string | null>(null);
 
   // Arc Testnet Stats Live Monitor
   const [gasPrice, setGasPrice] = useState<string | null>(null);
@@ -209,19 +210,6 @@ export default function App() {
               {/* Header selection tab bar of bento - Grid of 2 equal columns covering full width */}
               <div className="bg-slate-50 border-b-2 border-slate-200 grid grid-cols-2 text-center">
                 <button
-                  id="tab-github"
-                  onClick={() => setActiveTab('github')}
-                  className={`py-3.5 text-[11px] sm:text-xs font-bold tracking-wider uppercase transition-all inline-flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer font-mono border-b-2 ${
-                    activeTab === 'github'
-                      ? 'bg-white border-indigo-600 text-indigo-600 font-black'
-                      : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
-                  }`}
-                >
-                  <Github className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                  <span className="truncate">GitHub Auditor</span>
-                </button>
-
-                <button
                   id="tab-scan"
                   onClick={() => setActiveTab('scan')}
                   className={`py-3.5 text-[11px] sm:text-xs font-bold tracking-wider uppercase transition-all inline-flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer font-mono border-b-2 ${
@@ -231,7 +219,20 @@ export default function App() {
                   }`}
                 >
                   <FileCode className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                  <span className="truncate">Config Scanner</span>
+                  <span className="truncate">Code Setup Scanner</span>
+                </button>
+
+                <button
+                  id="tab-interactive"
+                  onClick={() => setActiveTab('interactive')}
+                  className={`py-3.5 text-[11px] sm:text-xs font-bold tracking-wider uppercase transition-all inline-flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer font-mono border-b-2 ${
+                    activeTab === 'interactive'
+                      ? 'bg-white border-indigo-600 text-indigo-600 font-black'
+                      : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
+                  }`}
+                >
+                  <Sliders className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                  <span className="truncate">Match Calculator</span>
                 </button>
               </div>
 
@@ -250,8 +251,8 @@ export default function App() {
                       <PasteScanner onParsed={handleParsed} />
                     )}
 
-                    {activeTab === 'github' && (
-                      <GithubScanner />
+                    {activeTab === 'interactive' && (
+                      <InteractiveMatcher />
                     )}
                   </motion.div>
                 </AnimatePresence>
@@ -393,13 +394,13 @@ export default function App() {
                 <Shield className="h-48 w-48 text-white" />
               </div>
               <div className="flex justify-between items-start z-10 font-mono">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-200">Config Auditor</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-200 font-mono">Config Auditor</span>
                 <Globe className="h-5 w-5 text-indigo-200" />
               </div>
               <div className="z-10 mt-4">
                 <div className="text-xl font-bold tracking-tight mb-1 font-mono">SCANNER ACTIVE</div>
                 <p className="text-indigo-100 text-xs leading-relaxed font-sans opacity-95">
-                  Paste your project files or scan a public GitHub repository. We will automatically detect if your code correctly targets and configures Arc Testnet (Chain ID {OFFICIAL_ARC_TESTNET.chainId}).
+                  Paste your project files or scan a public GitHub repository. We will automatically detect if your code correctly targets and configures Arc Testnet (Chain ID 5042002).
                 </p>
               </div>
             </div>
@@ -426,13 +427,13 @@ export default function App() {
               </div>
 
               {/* Card C: Official Endpoint card */}
-              <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-xs hover:border-indigo-400 transition-colors col-span-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase font-mono tracking-wider block">Official RPC Endpoint</span>
+              <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-xs hover:border-indigo-400 transition-colors col-span-2 font-mono">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Official RPC Endpoint</span>
                 <div className="mt-3">
                   <code className="text-xs font-mono font-bold text-slate-700 bg-slate-100 rounded px-1.5 py-1 block truncate select-all">
                     {OFFICIAL_ARC_TESTNET.rpcUrl}
                   </code>
-                  <div className="text-[9px] text-slate-400 font-mono mt-2 font-bold uppercase">Rate-Limit: 120 req/min</div>
+                  <div className="text-[9px] text-slate-400 mt-2 font-bold uppercase">Rate-Limit: 120 req/min</div>
                 </div>
               </div>
 
